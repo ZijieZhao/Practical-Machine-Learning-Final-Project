@@ -1,0 +1,57 @@
+# The exploration of the manner in accelerometers
+
+## Getting and Cleaning Data
+
+Due to the inital impression of available data set, some columns are full of missing values, implying that it wouldn't be helpful in the prediction of classe. Therefore, the first thing that we need to do is cleaning the data set.
+
+```{r,echo=T}
+library(caret)
+library(randomForest)
+training<-read.csv('training.csv',na.strings = c('NA',''),header=T)
+testing<-read.csv('testing.csv',na.strings=c('NA',''),header=T)
+
+training<-training[,colSums(is.na(training))==0]
+testing<-testing[,colSums(is.na(testing))==0]
+```
+
+According to subjective inspection, the first 7 columns could be useless for our prediction of classe, hence they are deleted
+
+```{r,echo=T}
+traindata<-training[,-c(1:7)]
+testdata<-testing[,-c(1:7)]
+```
+
+## The Cross Validation of data.
+
+To achieve the cross validation, the K-Fold method is choosen to make 5 folders
+
+```{r,echo=T}
+set.seed(999)
+intrain<-createDataPartition(traindata$classe,p=0.7,list=F)
+train<-traindata[intrain,]
+vaild<-traindata[-intrain,]
+control<-trainControl(method='cv',number=5)
+```
+
+After this, the prepartion for the model fitting has been done.
+
+## The Random Forest Model
+
+The chosen method to build model in this situation is Random Forest due to the fact that the accuracy of this model is reliable although it could be hard to quantify and interpret. The sequency to build this model is shown as:
+
+```{r,echo=T}
+fit<-train(classe~.,data=train,method='rf',trContril=control)
+prediction<-predict(fit,vaild)
+confusionMatrix(vaild$classe,prediction)
+```
+
+According to the confusion matrix, the accuracy of model is nearly 1, implying it is a acceptable and relatively reliable model.
+
+## Prediction of Testing Data
+
+The prediction of testing Data is shown as:
+
+```{r,echo=T}
+predict(fit,testdata)
+```
+
